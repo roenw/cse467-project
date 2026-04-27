@@ -13,6 +13,8 @@ main_pategan_experiment.py
 (1) pategan_main: main function for PATEGAN
 """
 
+# USAGE ::: /opt/homebrew/bin/python3.10 main_pategan_experiment.py --dataset student --input_csv ../Student_data.csv --output_csv ../pategan_synth_out.csv --generate_only --iterations 1 --epsilon 0.2 --k 5 --batch_size 64 --n_s 1 && echo '--- generated preview ---' && head -n 5 ../synthetic_students_pategan_check.csv
+
 # Necessary packages
 from __future__ import absolute_import
 from __future__ import division
@@ -46,9 +48,14 @@ def preprocess_csv_data(file_path, drop_columns=None):
   if drop_columns is None:
     drop_columns = []
 
-  data = pd.read_csv(file_path)
+  full_data = pd.read_csv(file_path)
+  data = full_data.copy()
+  input_columns = data.columns.tolist()
 
   existing_drop_columns = [col for col in drop_columns if col in data.columns]
+  dropped_column_values = {}
+  for col in existing_drop_columns:
+    dropped_column_values[col] = full_data[col].copy()
   if existing_drop_columns:
     data = data.drop(columns=existing_drop_columns)
 
@@ -80,6 +87,9 @@ def preprocess_csv_data(file_path, drop_columns=None):
   normalized_data = scaler.fit_transform(encoded_data)
 
   preprocess_info = {
+      'input_columns': input_columns,
+      'dropped_columns': existing_drop_columns,
+      'dropped_column_values': dropped_column_values,
       'original_columns': data.columns.tolist(),
       'encoded_columns': encoded_columns,
       'categorical_cols': categorical_cols,
@@ -132,6 +142,21 @@ def postprocess_synthetic_data(synth_data, preprocess_info):
     output_df[col] = top_col.str[len(col) + 1:]
 
   output_df = output_df[preprocess_info['original_columns']]
+
+  # Re-introduce dropped columns so the final schema matches the input CSV.
+  for col in preprocess_info.get('dropped_columns', []):
+    source_series = preprocess_info.get('dropped_column_values', {}).get(col, pd.Series(dtype=object))
+    source_values = source_series.dropna().to_numpy()
+    if len(source_values) == 0:
+      output_df[col] = ''
+    else:
+      output_df[col] = np.random.choice(source_values, size=output_df.shape[0], replace=True)
+
+  if 'input_columns' in preprocess_info:
+    output_df = output_df[preprocess_info['input_columns']]
+
+  if 'Student_ID' in output_df.columns:
+    output_df = output_df.drop(columns=['Student_ID'])
 
   return output_df
 
@@ -294,7 +319,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--drop_columns',
       help='comma-separated columns to drop before training',
-      default='Student_ID',
+      default='',
       type=str)
   parser.add_argument(
       '--generate_only',
@@ -351,6 +376,10 @@ if __name__ == '__main__':
       synth_df = postprocess_synthetic_data(synth_data, preprocess_info)
     elif preprocess_info is None:
       synth_df = pd.DataFrame(synth_data)
+      if args.input_csv and os.path.exists(args.input_csv):
+        input_columns = pd.read_csv(args.input_csv, nrows=0).columns.tolist()
+        if len(input_columns) == synth_df.shape[1]:
+          synth_df.columns = input_columns
     else:
       synth_df = pd.DataFrame(synth_data, columns=preprocess_info['encoded_columns'])
 
