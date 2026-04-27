@@ -1,12 +1,11 @@
-# CTGAN Synthetic Student Data Pipeline
+CTGAN Synthetic Student Data Pipeline
 
-## Overview
+Overview
 
-This project uses **CTGAN (Conditional Tabular GAN)** to generate synthetic student performance data while evaluating both **data utility** and **privacy**. It is designed as a practical academic implementation for synthetic educational dataset generation and analysis.
+This project uses CTGAN (Conditional Tabular GAN) to generate synthetic student performance data while evaluating both data utility and privacy. It is designed as a practical academic implementation for synthetic educational dataset generation and analysis.
 
----
 
-## Key Features
+Key Features
 
 * Trains CTGAN on real student data
 * Generates synthetic datasets of equal size
@@ -27,33 +26,27 @@ This project uses **CTGAN (Conditional Tabular GAN)** to generate synthetic stud
   * `synthetic_students.csv`
   * `privacy_utility.json`
   * `comparison.png`
-  * `evaluation_plots.png`
 
----
+Installation
 
-## Installation
-
-```bash
+bash
 pip install ctgan pandas numpy scipy scikit-learn matplotlib
-```
 
----
+Usage
 
-## Usage
-
-```bash
+bash
 python3 ctgan_full_pipeline.py
-```
+
 
 Input dataset:
 
-```txt
+
 Student_data.csv
-```
 
----
 
-## Method
+
+
+ Method
 
 1. Load and preprocess educational data
 2. Train CTGAN model
@@ -61,25 +54,15 @@ Student_data.csv
 4. Evaluate statistical similarity and privacy risks
 5. Export reports and visualizations
 
----
 
-## Limitations
 
-* Standard CTGAN only (non-differentially private)
+Limitations
+
+* Standard CTGAN only not dp
 * No DPGAN/PATEGAN implementation
 * Privacy metrics are approximations, not formal DP guarantees
 
----
-
-## Future Work
-
-* Add differential privacy (ε = 0.1, 1, 10)
-* Expand downstream ML evaluations
-* Implement advanced privacy-preserving generators
-
----
-
-## Purpose
+Purpose
 
 This pipeline provides a balanced framework for:
 
